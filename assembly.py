@@ -67,7 +67,7 @@ def _gerar_operando_em_d0(no: No) -> str:
         if "." in val:
             # Constante double: VLDR carrega 8 bytes do label .double em .data.
             label = _label_para_float(val)
-            return f"    VLDR D0, {label}  @ real {val}"
+            return f"    LDR R6, ={label}\n    VLDR D0, [R6]  @ real {val}"
         else:
             # Inteiro: S0 é ponte obrigatória no ARMv7 (não existe VCVT Dd, Rn).
             # S0 carrega o padrão de bits inteiro; VCVT promove para F64 em D0.
@@ -114,8 +114,10 @@ def _gerar_op(op: str) -> str:
             f"    @ divisao via loop de subtracao em F64 (VDIV nao suportado)\n"
             f"    VMOV.F64 D2, D1         @ D2 = esq (dividendo)\n"
             f"    VMOV.F64 D3, D0         @ D3 = dir (divisor)\n"
-            f"    VLDR D4, CONST_ZERO     @ D4 = contador\n"
-            f"    VLDR D5, CONST_ONE      @ D5 = incremento\n"
+            f"    LDR R6, =CONST_ZERO\n"
+            f"    VLDR D4, [R6]           @ D4 = contador\n"
+            f"    LDR R6, =CONST_ONE\n"
+            f"    VLDR D5, [R6]           @ D5 = incremento\n"
             f"{label_loop}:\n"
             f"    VCMP.F64 D2, D3\n"
             f"    VMRS APSR_nzcv, FPSCR\n"
@@ -154,8 +156,10 @@ def _gerar_op(op: str) -> str:
             f"    @ potencia via loop de multiplicacao em F64\n"
             f"    VMOV.F64 D2, D1         @ D2 = base\n"
             f"    VMOV.F64 D3, D0         @ D3 = expoente (contador)\n"
-            f"    VLDR D4, CONST_ONE      @ D4 = acumulador\n"
-            f"    VLDR D5, CONST_ONE      @ D5 = decremento\n"
+            f"    LDR R6, =CONST_ONE\n"
+            f"    VLDR D4, [R6]           @ D4 = acumulador\n"
+            f"    LDR R6, =CONST_ONE\n"
+            f"    VLDR D5, [R6]           @ D5 = decremento\n"
             f"{label_loop}:\n"
             f"    VCMP.F64 D3, #0.0\n"
             f"    VMRS APSR_nzcv, FPSCR\n"
@@ -177,10 +181,12 @@ def _gerar_op(op: str) -> str:
             f"    VCMP.F64 D1, D0\n"
             f"    VMRS APSR_nzcv, FPSCR\n"
             f"    BGT {lt}\n"
-            f"    VLDR D0, CONST_ZERO\n"
+            f"    LDR R6, =CONST_ZERO\n"
+            f"    VLDR D0, [R6]\n"
             f"    B {le}\n"
             f"{lt}:\n"
-            f"    VLDR D0, CONST_ONE\n"
+            f"    LDR R6, =CONST_ONE\n"
+            f"    VLDR D0, [R6]\n"
             f"{le}:"
         )
     elif op == "<":
@@ -189,10 +195,12 @@ def _gerar_op(op: str) -> str:
             f"    VCMP.F64 D1, D0\n"
             f"    VMRS APSR_nzcv, FPSCR\n"
             f"    BLT {lt}\n"
-            f"    VLDR D0, CONST_ZERO\n"
+            f"    LDR R6, =CONST_ZERO\n"
+            f"    VLDR D0, [R6]\n"
             f"    B {le}\n"
             f"{lt}:\n"
-            f"    VLDR D0, CONST_ONE\n"
+            f"    LDR R6, =CONST_ONE\n"
+            f"    VLDR D0, [R6]\n"
             f"{le}:"
         )
     elif op == "==":
@@ -201,10 +209,12 @@ def _gerar_op(op: str) -> str:
             f"    VCMP.F64 D1, D0\n"
             f"    VMRS APSR_nzcv, FPSCR\n"
             f"    BEQ {lt}\n"
-            f"    VLDR D0, CONST_ZERO\n"
+            f"    LDR R6, =CONST_ZERO\n"
+            f"    VLDR D0, [R6]\n"
             f"    B {le}\n"
             f"{lt}:\n"
-            f"    VLDR D0, CONST_ONE\n"
+            f"    LDR R6, =CONST_ONE\n"
+            f"    VLDR D0, [R6]\n"
             f"{le}:"
         )
     elif op == "!=":
@@ -213,10 +223,12 @@ def _gerar_op(op: str) -> str:
             f"    VCMP.F64 D1, D0\n"
             f"    VMRS APSR_nzcv, FPSCR\n"
             f"    BNE {lt}\n"
-            f"    VLDR D0, CONST_ZERO\n"
+            f"    LDR R6, =CONST_ZERO\n"
+            f"    VLDR D0, [R6]\n"
             f"    B {le}\n"
             f"{lt}:\n"
-            f"    VLDR D0, CONST_ONE\n"
+            f"    LDR R6, =CONST_ONE\n"
+            f"    VLDR D0, [R6]\n"
             f"{le}:"
         )
     elif op == ">=":
@@ -225,10 +237,12 @@ def _gerar_op(op: str) -> str:
             f"    VCMP.F64 D1, D0\n"
             f"    VMRS APSR_nzcv, FPSCR\n"
             f"    BGE {lt}\n"
-            f"    VLDR D0, CONST_ZERO\n"
+            f"    LDR R6, =CONST_ZERO\n"
+            f"    VLDR D0, [R6]\n"
             f"    B {le}\n"
             f"{lt}:\n"
-            f"    VLDR D0, CONST_ONE\n"
+            f"    LDR R6, =CONST_ONE\n"
+            f"    VLDR D0, [R6]\n"
             f"{le}:"
         )
     elif op == "<=":
@@ -237,10 +251,12 @@ def _gerar_op(op: str) -> str:
             f"    VCMP.F64 D1, D0\n"
             f"    VMRS APSR_nzcv, FPSCR\n"
             f"    BLE {lt}\n"
-            f"    VLDR D0, CONST_ZERO\n"
+            f"    LDR R6, =CONST_ZERO\n"
+            f"    VLDR D0, [R6]\n"
             f"    B {le}\n"
             f"{lt}:\n"
-            f"    VLDR D0, CONST_ONE\n"
+            f"    LDR R6, =CONST_ONE\n"
+            f"    VLDR D0, [R6]\n"
             f"{le}:"
         )
     else:
@@ -267,7 +283,8 @@ def _gerar_expr(no: No, salvar_res: bool) -> str:
         linhas.append("    LDR R3, =RES_IDX")
         linhas.append("    LDR R2, [R3]")
         linhas.append("    LDR R4, =RES_HIST")
-        linhas.append("    VSTR D0, [R4, R2, LSL #3]")
+        linhas.append("    ADD R6, R4, R2, LSL #3")
+        linhas.append("    VSTR D0, [R6]")
         linhas.append("    ADD R2, R2, #1")
         linhas.append("    STR R2, [R3]")
 
@@ -314,7 +331,8 @@ def _gerar_cmd_res(no: No) -> str:
     if n_val > 0:
         linhas.append(f"    SUB R2, R2, #{n_val}")
     linhas.append("    LDR R4, =RES_HIST")
-    linhas.append("    VLDR D0, [R4, R2, LSL #3]")
+    linhas.append("    ADD R6, R4, R2, LSL #3")
+    linhas.append("    VLDR D0, [R6]")
     return "\n".join(linhas)
 
 
